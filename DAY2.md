@@ -840,3 +840,275 @@ AI Agent
 
 
 #Refer: https://drive.google.com/file/d/1_emw2Pj1aecYZe4LKFcL8-zMDeBBRgQF/view
+
+
+
+What's missing (and should be added)
+⭐ 1. Agent Harness (Very Important)
+
+The paper repeatedly emphasizes:
+
+Agent = Model + Harness
+
+Explain:
+
+What is a Harness?
+Responsibilities
+Prompt management
+Memory
+Tool calling
+Planning
+Error handling
+Context management
+
+This is frequently asked in AI engineer interviews.
+
+⭐ 2. Industry Standards Analogy
+
+The paper compares protocols to industry standards:
+
+MCP → USB-C
+A2A → Factory Radio
+A2UI → Display Window
+AP2 → Supply Chain
+Skills → Playbooks
+
+This analogy makes the concepts memorable.
+
+⭐ 3. OpenResponses & Interactions API
+
+The whitepaper introduces:
+
+Long-running agents
+Stateful execution
+Difference from stateless chat
+
+Worth adding because it explains why agent APIs differ from simple chat completions.
+
+⭐ 4. Skills
+
+It briefly introduces Skills:
+
+Markdown playbooks
+Reusable instructions
+Terminal execution
+Sandboxed tasks
+
+These become more important in later days, but a summary here helps.
+
+⭐ 5. AGENTS.md Best Practices
+
+The document includes practical guidance such as:
+
+Think before coding
+State assumptions
+Ask clarifying questions
+Make minimal changes
+Write tests
+Verify before finishing
+
+These are useful for coding-agent design and interviews.
+
+⭐ 6. MCP Security
+
+Currently only lightly covered.
+
+Expand with:
+
+Least privilege
+Read-only mode
+Credential isolation
+Model Armor
+Environment variables
+Avoid production systems
+Audit logging
+Human-in-the-loop approval
+⭐ 7. MCP Debugging Flow
+
+Include a troubleshooting sequence like:
+
+Wrong Tool Call
+
+↓
+
+Check Schema
+
+↓
+
+Check Payload
+
+↓
+
+Check Transport
+
+↓
+
+Check Prompt
+
+↓
+
+Retry
+⭐ 8. Monolithic Agent Problems
+
+The paper explains three major issues:
+
+Scaling friction
+Context overload
+Single point of failure
+
+These deserve their own section.
+
+⭐ 9. Specialization as a Scaling Mechanism
+
+One of the key ideas:
+
+Instead of:
+
+One Super Agent
+
+Use:
+
+Coordinator
+
+↓
+
+Specialists
+
+Explain why specialization improves reasoning and maintainability.
+
+⭐ 10. Distributed Multi-Agent Architecture
+
+The paper includes an architecture where:
+
+Coordinator
+
+↓
+
+Google Agent
+
+↓
+
+Salesforce Agent
+
+↓
+
+Workday Agent
+
+Add a dedicated diagram and explanation.
+
+⭐ 11. Build vs Buy
+
+An important engineering decision:
+
+Build your own specialist agent?
+Use an official domain agent?
+
+Include pros, cons, and when to choose each.
+
+⭐ 12. Bounded vs Unbounded Domains
+
+A great interview topic.
+
+Tools operate in bounded domains:
+
+Input
+
+↓
+
+Output
+
+Agents operate in unbounded domains:
+
+Question
+
+↓
+
+Clarification
+
+↓
+
+Negotiation
+
+↓
+
+Decision
+⭐ 13. GOTO Problem
+
+The paper introduces the "GOTO Problem in Agentic Architecture":
+
+Why treating an agent as a simple tool breaks control flow
+Why multi-turn collaboration requires A2A
+
+This is a unique concept worth capturing.
+
+⭐ 14. Generative UI
+
+The current notes only briefly mention A2UI.
+
+Expand with:
+
+What is Generative UI?
+Canvas
+Interactive Artifacts
+Two generation patterns
+Hybrid output
+Security considerations
+⭐ 15. AP2 & UCP Examples
+
+The paper includes practical examples:
+
+Food ordering
+Autonomous procurement
+Payment authorization
+
+These make the protocols much easier to understand.
+
+⭐ 16. Real-World Java Examples
+
+For example:
+
+MCP
+
+Spring AI
+
+↓
+
+MCP Client
+
+↓
+
+GitHub MCP
+
+↓
+
+GitHub API
+
+A2A
+
+Travel Agent
+
+↓
+
+Hotel Agent
+
+↓
+
+Flight Agent
+
+↓
+
+Payment Agent
+⭐ 17. More Interview Questions
+
+Increase from 5 to 25–30, covering topics like:
+
+Why A2A instead of REST?
+Why MCP instead of wrappers?
+stdio vs SSE
+Agent Card
+Agent Registry
+GOTO problem
+Monolithic vs Distributed agents
+Bounded vs Unbounded domains
+Build vs Buy
+Harness responsibilities
