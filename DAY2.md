@@ -22,3 +22,6 @@ raw, complex JSON outputs into safe, interactive visual components for human ope
 • AP2 and UCP act as the "Global Supply Chain & Transaction Network", allowing
 agents to securely negotiate and execute autonomous commercial transactions.
 
+
+<img width="660" height="377" alt="Screenshot 2026-06-19 at 5 35 27 PM" src="https://github.com/user-attachments/assets/c785a733-d814-4ef9-92b4-6575e7acc5c5" />
+
