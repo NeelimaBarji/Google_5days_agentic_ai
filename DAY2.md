@@ -242,3 +242,122 @@ GitHub MCP
 ↓
 
 GitHub API
+
+
+Why MCP Matters
+
+Without MCP
+
+Every API
+
+Different JSON
+
+Different Authentication
+
+Different Logic
+
+With MCP
+
+Everything follows one standard.
+
+MCP Communication
+
+Two transports
+
+1. stdio
+
+Agent
+
+↓
+
+Local Process
+
+↓
+
+MCP Server
+
+Best for
+
+Local development
+Fast
+Simple
+
+
+2. SSE (Server Sent Events)
+
+Agent
+
+↓
+
+Internet
+
+↓
+
+Remote MCP
+
+Best for
+
+Cloud applications.
+
+Debugging MCP
+
+Recommended tools
+
+MCP Inspector
+Chrome DevTools
+
+Check
+
+Tool schemas
+JSON payloads
+Tool responses
+Transport errors
+
+
+MCP Best Practices
+DO
+
+✅ Review public MCP servers
+
+✅ Use environment variables
+
+✅ Use internal registries
+
+✅ Audit tool usage
+
+✅ Human approval before dangerous actions
+
+✅ Read-only mode when possible
+
+DON'T
+
+❌ Hardcode API Keys
+
+❌ Connect to production unnecessarily
+
+❌ Give broad permissions
+
+❌ Build wrappers if MCP already exists
+
+A2A (Agent-to-Agent)
+
+Definition
+
+Allows AI agents to communicate with other AI agents.
+
+Instead of
+
+Agent
+
+↓
+
+API
+
+↓
+
+Everything
+
+You get
+
+
+
