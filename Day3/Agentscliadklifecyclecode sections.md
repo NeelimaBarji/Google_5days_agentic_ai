@@ -321,3 +321,25 @@ agents-cli run "How long does standard delivery take?"
 ```bash
 rm -rf customer-support-agent
 ```
+---
+
+## 10. Summary & Next Steps
+Congratulations! You have successfully managed the end-to-end local development lifecycle of an AI agent using Agents CLI and ADK 2.0.
+
+### What you learned
+Set Up your Tools: Installed the Agents CLI and configured domain-specific workflow skills for Antigravity.
+Scaffolded a Project: Created a fully structured customer-support-agent project using standardized templates.
+Analyzed ADK 2.0 Structure: Explored graph workflows, LLM agents, nodes, edges, and conditional routing.
+Managed Local Health: Ran automated code quality checks using agents-cli lint.
+Verified Behavior: Tested the agent interactively with real-time hot-reloading via the playground, and ran quick tests on the command line.
+
+### What's Next?
+Now that you have mastered the local development loop, here is how you can expand and productionize your agent:
+
+Evaluation: Score your agent against an evalset using agents-cli eval run to measure accuracy and find regressions.
+Enterprise Cloud Scale: Deployment & Observability: Package and deploy your agent to production environments like Agent Runtime or Cloud Run using agents-cli deploy. Set up production telemetry to stream logs and execution traces to Cloud Trace and BigQuery.
+
+Additional Resources
+Agents CLI GitHub Repository: https://github.com/google/agents-cli
+Agent Development Kit (ADK) Documentation: https://adk.dev/
+Agent Platform Overview : https://docs.cloud.google.com/gemini-enterprise-agent-platform
