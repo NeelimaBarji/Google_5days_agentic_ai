@@ -7,6 +7,30 @@
 
 ---
 
+## 1. Overview
+This lab is part of Kaggle's 5-Day AI Agents: Intensive Vibe Coding Course with Google. You can find the additional codelabs and resources available on the event site.
+
+In this codelab, you will learn how to use Agents CLI to govern the complete local development lifecycle of an AI agent. Whether you are wrapping existing Gemini models or building custom agents from scratch with the Agent Development Kit (ADK 2.0), Agents CLI provides the tools to scaffold, build, lint, and test your agents locally.
+
+What you'll learn
+How to install and set up agents-cli and its associated skills.
+How to scaffold a new agent project.
+The structure and key files of an ADK 2.0 graph workflow agent project.
+How to run automated linting and code cleanups.
+How to launch and use the local web playground for interactive testing with auto-reloading.
+
+### What you need
+Python 3.11 or higher
+uv package manager
+Node.js 18+ (if using coding agent skills)
+Antigravity IDE (install and configure from Google Antigravity)
+
+### Prerequisites
+This Codelab assumes you are comfortable with:
+
+Using a terminal and command line.
+No prior experience with AI agents or ADK 2.0 is required!
+
 ## 2. Set up Authentication & Environment
 
 ### Option 1: Gemini API Key (Google AI Studio)
