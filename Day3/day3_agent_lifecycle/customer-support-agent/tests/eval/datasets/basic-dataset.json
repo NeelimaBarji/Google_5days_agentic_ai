@@ -1,0 +1,32 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "tracking_query",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "How do I track my delivery package?"}]
+      }
+    },
+    {
+      "eval_case_id": "rates_query",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Can you tell me about the shipping rates for international delivery?"}]
+      }
+    },
+    {
+      "eval_case_id": "weather_query",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "What is the weather like in New York?"}]
+      }
+    },
+    {
+      "eval_case_id": "joke_query",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Tell me a funny joke about programming."}]
+      }
+    }
+  ]
+}
