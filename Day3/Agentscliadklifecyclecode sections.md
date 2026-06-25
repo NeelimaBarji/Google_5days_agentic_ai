@@ -227,6 +227,12 @@ app = App(
 
 > **Note:** The codelab source has a couple of stray typos in this snippet (`model='gemini-3.1-flash-lite''` with an extra quote, and `` `gemini-3.1-flash-lite' `` in the Key Concepts prose with a mismatched quote). They've been left in below as-is for the literal export, but corrected to `model='gemini-3.1-flash-lite',` in the code block above so it's actually runnable.
 
+> Key Concepts
+1. Workflow & Edges: In ADK 2.0, agent applications are orchestrated as a graph using Workflow. The edges list defines the execution flow, chaining nodes together from START and enabling conditional branching based on routes (e.g., routing to faq_agent on "shipping" or handle_unrelated on "unrelated").
+2. LlmAgent: Declarative nodes that define LLM-powered tasks with specific instructions, models, and structured outputs (output_schema).
+Nodes & Context: Python functions decorated with @node (or standard functions) that perform logic, access execution state via Context, and yield Event objects to pass data and routing signals along the graph.
+3. Model: `gemini-3.1-flash-lite' is used as the default fast reasoning model.
+4. App Wrapper: The top-level App object wraps the root workflow. External tools like the local playground, ADK evaluation harnesses, and Agent Runtime discover and execute your workflow through this standardized app interface.
 ---
 
 ## 6. Automated Linting
