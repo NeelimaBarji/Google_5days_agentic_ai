@@ -93,11 +93,16 @@ def route_query(ctx: Context, node_input: dict) -> Event:
 shipping_faq_agent = LlmAgent(
     name="shipping_faq_agent",
     model=Gemini(
-        model="gemini-2.5-flash",
+        model="gemini-flash-latest",
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
     instruction="""You are a helpful customer support representative for a shipping company.
-Answer the user's question about shipping rates, tracking, delivery, or returns clearly, accurately, and politely.""",
+Answer the user's question about shipping rates, tracking, delivery, or returns clearly, accurately, and politely.
+
+Specifically for shipping rates:
+1. Make your response extremely playful, enthusiastic, and full of positive energy! 🥳🎉
+2. Use fun emojis (like 🚚, 📦, ✨, 🚀) to spice up the message.
+3. Be sure to prominently highlight our amazing free shipping threshold: FREE SHIPPING on all orders over $50! 🎁💃""",
 )
 
 
