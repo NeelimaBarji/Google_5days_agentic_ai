@@ -511,7 +511,21 @@ Launch the built-in, local web-based playground to interact with your agent visu
 #### agents-cli playground
 What happens behind the scenes: The CLI fires up an ADK web UI server, typically accessible at http://localhost:8080 or fallback http://127.0.0.1:8000, complete with hot-reloading. From the web interface select app in the Select an app dropdown at the top and interact with the agent in the conversational interface on the right side of the web application.
 
+# 7. Installing Agent Skills using npx skills
+npx skills is a command-line tool developed by Vercel Labs that acts as a package manager for AI agents (like Antigravity, Claude Code, GitHub Copilot, Cursor, and Cline). It is the CLI for the open agent skills ecosystem.
 
+If you are looking to download and install Agent Skills using the npx skills package, do note that it places the Skills in the ~/.agents/skills folder. While it mentions that tools like Antigravity will pick up the skills from this folder, please note that at the time of writing, Antigravity picks it up from this folder but Antigravity CLI does not. As mentioned earlier, you will need to copy these skills installed in ~/.agents/skills folder, to either the project or global scope for skills folders in Antigravity CLI i.e.
+
+Project Scope: Located in <project-root>/.agent/skills/.
+Global Scope: Located in ~/.gemini/antigravity-cli/skills/.
+
+
+# 8. Reference docs
+Codelab : Getting Started with Google Antigravity
+Official Site : https://antigravity.google/
+Documentation: https://antigravity.google/docs
+Download : https://antigravity.google/download
+Antigravity Skills documentation: https://antigravity.google/docs/skills
 
 
 
