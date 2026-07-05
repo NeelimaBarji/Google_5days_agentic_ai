@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevLoop — SDLC Pipeline Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;--border2:#21262d;
+  --text:#e6edf3;--muted:#8b949e;--dim:#484f58;
+  --green:#3fb950;--green-bg:#1a3a2a;--green-bd:#238636;
+  --blue:#58a6ff;--blue-bg:#1f3a5f;--blue-bd:#1f6feb;
+  --yellow:#e3b341;--yellow-bg:#2d2006;--yellow-bd:#9e6a03;
+  --red:#f85149;--red-bg:#3a0a0a;--red-bd:#da3633;
+  --purple:#bc8cff;--purple-bg:#2d1f4a;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* ── TOP BAR ── */
+.topbar{display:flex;align-items:center;gap:14px;padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#7c3aed,#2563eb);display:flex;align-items:center;justify-content:center;font-size:15px}
+.brand{font-size:14px;font-weight:700;color:#f0f6fc}
+.sep{width:1px;height:18px;background:var(--border)}
+.tid{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700}
+.ttitle{font-size:13px;color:#c9d1d9}
+.sp{flex:1}
+.pill{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 11px;border-radius:20px;border:1px solid var(--green-bd);background:var(--green-bg);color:var(--green)}
+.pill.running{border-color:var(--blue-bd);background:var(--blue-bg);color:var(--blue)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.dot.pulse{animation:p 1.2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--border2);color:var(--muted);transition:all .15s;white-space:nowrap}
+.btn:hover{background:var(--surface);color:var(--text)}
+.btn.blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd)}
+.btn.red{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;overflow:hidden}
+
+/* ── LEFT PANEL ── */
+.left{width:270px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
+.left-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.lh-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.prog-mini{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700}
+.bar-mini{width:50px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;background:var(--green);transition:width .4s}
+
+.agent-scroll{flex:1;overflow-y:auto;padding:8px 6px}
+.agent-scroll::-webkit-scrollbar{width:3px}
+.agent-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.a-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;margin-bottom:1px;border:1px solid transparent;transition:all .15s}
+.a-item:hover{background:var(--border2)}
+.a-item.sel{background:var(--blue-bg);border-color:var(--blue-bd)}
+.a-item.sel .a-name{color:var(--blue)}
+.conn-line{width:2px;height:6px;background:var(--border);margin:1px auto 1px 18px}
+.a-ico{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--border2);flex-shrink:0;transition:background .15s}
+.a-item.s-completed .a-ico{background:var(--green-bg)}
+.a-item.s-running   .a-ico{background:var(--blue-bg)}
+.a-item.s-failed    .a-ico{background:var(--red-bg)}
+.a-body{flex:1;min-width:0}
+.a-name{font-size:12px;font-weight:600;color:#c9d1d9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.a-sub{font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.a-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;flex-shrink:0}
+.a-badge.completed{background:var(--green-bg);color:var(--green)}
+.a-badge.running{background:var(--blue-bg);color:var(--blue);animation:fb 1s infinite}
+.a-badge.pending{background:var(--border2);color:var(--dim)}
+.a-badge.failed{background:var(--red-bg);color:var(--red)}
+@keyframes fb{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── CENTER ── */
+.center{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* tabs */
+.tabs{display:flex;gap:2px;padding:8px 14px 0;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{padding:6px 14px;border-radius:6px 6px 0 0;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);border:1px solid transparent;border-bottom:none;margin-bottom:-1px;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.on{background:var(--bg);color:var(--text);border-color:var(--border)}
+.badge{background:var(--border2);color:var(--muted);font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px}
+
+/* panes */
+.pane{display:none;flex:1;flex-direction:column;overflow:hidden}
+.pane.on{display:flex}
+
+/* ── OUTPUT PANE ── */
+.out-wrap{flex:1;overflow-y:auto;padding:16px}
+.out-wrap::-webkit-scrollbar{width:4px}
+.out-wrap::-webkit-scrollbar-thumb{background:var(--border)}
+
+.agent-hdr{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.agent-big{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--border2);flex-shrink:0}
+.agent-big.completed{background:var(--green-bg)}
+.agent-big.running{background:var(--blue-bg)}
+.agent-ttl{font-size:16px;font-weight:700;color:#f0f6fc}
+.agent-sub2{font-size:11px;color:var(--muted);margin-top:2px}
+.spill{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-left:auto}
+.spill.completed{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.spill.running{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
+.spill.pending{background:var(--border2);color:var(--dim);border:1px solid var(--border)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px}
+.card.full{grid-column:span 2}
+.card h4{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:9px}
+.kv{display:flex;gap:8px;margin-bottom:5px;font-size:11px}
+.kv .k{color:#79c0ff;min-width:90px;flex-shrink:0;font-family:monospace}
+.kv .v{color:#c9d1d9;word-break:break-all}
+.kv .v.g{color:var(--green)}.kv .v.r{color:var(--red)}.kv .v.y{color:var(--yellow)}
+
+.file-row{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--border2);font-size:11px;font-family:monospace}
+.file-row:last-child{border:none}
+.ftag{padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700}
+.ftag.mod{background:var(--blue-bg);color:var(--blue)}
+.ftag.new{background:var(--green-bg);color:var(--green)}
+.ftag.del{background:var(--red-bg);color:var(--red)}
+
+/* ── INLINE LOG (in Output pane) ── */
+.ilog-wrap{grid-column:span 2}
+.ilog-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ilog-hdr h4{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted)}
+.ilog-body{background:var(--bg);border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;font-family:'SF Mono','Fira Code',monospace;font-size:11px}
+.ilog-body::-webkit-scrollbar{width:3px}
+.ilog-body::-webkit-scrollbar-thumb{background:var(--border)}
+.ilog-line{display:flex;align-items:flex-start;gap:8px;padding:4px 10px;border-bottom:1px solid var(--border2)}
+.ilog-line:last-child{border:none}
+.ilog-ts{color:var(--dim);min-width:64px;flex-shrink:0}
+.ilog-msg{flex:1;line-height:1.5}
+.ilog-line.ok   .ilog-msg{color:var(--green)}
+.ilog-line.info .ilog-msg{color:var(--blue)}
+.ilog-line.warn .ilog-msg{color:var(--yellow)}
+.ilog-line.err  .ilog-msg{color:var(--red)}
+.ilog-line.dim  .ilog-msg{color:var(--muted)}
+
+.no-sel{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--dim);font-size:13px}
+.no-sel .ns-ico{font-size:36px}
+
+/* ── LOGS PANE ── */
+.log-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;flex-wrap:wrap}
+.log-search{background:var(--border2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:11px;outline:none;width:180px}
+.log-search:focus{border-color:var(--blue-bd)}
+.log-search::placeholder{color:var(--dim)}
+.filter-sep{width:1px;height:16px;background:var(--border);flex-shrink:0}
+
+/* agent filter buttons */
+.af-row{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+.af{padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--border2);color:var(--muted);transition:all .15s}
+.af:hover{color:var(--text)}
+.af.on{color:var(--text);background:var(--surface);border-color:#666}
+
+/* type filter buttons */
+.tf{padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--muted);transition:all .15s}
+.tf:hover{color:var(--text)}
+.tf.on.ok  {background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+.tf.on.warn{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow-bd)}
+.tf.on.err {background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.tf.on.info{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd)}
+.tf.on.all {background:var(--border2);color:var(--text);border-color:var(--border)}
+
+.log-body{flex:1;overflow-y:auto;font-family:'SF Mono','Fira Code',monospace;font-size:11px}
+.log-body::-webkit-scrollbar{width:4px}
+.log-body::-webkit-scrollbar-thumb{background:var(--border)}
+.log-row{display:flex;align-items:flex-start;gap:0;padding:3px 14px;border-bottom:1px solid transparent;transition:background .1s}
+.log-row:hover{background:var(--border2)}
+.log-row.hidden{display:none}
+.lr-ts{color:var(--dim);min-width:70px;flex-shrink:0;padding-top:1px}
+.lr-agent{min-width:110px;flex-shrink:0;margin-right:8px}
+.lr-agent span{padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700}
+.lr-msg{flex:1;line-height:1.6;word-break:break-all}
+.log-row.ok   .lr-msg{color:var(--green)}
+.log-row.info .lr-msg{color:var(--blue)}
+.log-row.warn .lr-msg{color:var(--yellow)}
+.log-row.err  .lr-msg{color:var(--red)}
+.log-row.dim  .lr-msg,.log-row.sys .lr-msg{color:var(--muted)}
+
+/* agent color tags */
+.tag-orchestrator{background:#2d1f4a;color:#bc8cff}
+.tag-analysis    {background:#1a2a1a;color:#7ee787}
+.tag-dev         {background:#1a1f3a;color:#79c0ff}
+.tag-testgen     {background:#2a1f1a;color:#ffa657}
+.tag-inttest     {background:#1a2a22;color:#56d364}
+.tag-testdoc     {background:#2a2a1a;color:#e3b341}
+.tag-mr          {background:#1f1a3a;color:#d2a8ff}
+.tag-review      {background:#2a1a2a;color:#f0a8ff}
+.tag-fix         {background:#1a2a2a;color:#79c0ff}
+.tag-security    {background:#2a1a1a;color:#ff7b72}
+.tag-system      {background:var(--border2);color:var(--muted)}
+
+/* ── TIMELINE PANE ── */
+.tl-wrap{flex:1;overflow-y:auto;padding:16px}
+.tl-wrap::-webkit-scrollbar{width:4px}
+.tl-wrap::-webkit-scrollbar-thumb{background:var(--border)}
+.tl-item{display:flex;gap:12px;margin-bottom:16px}
+.tl-col{display:flex;flex-direction:column;align-items:center;width:36px;flex-shrink:0}
+.tl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.tl-dot.completed{background:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+.tl-dot.running  {background:var(--blue);box-shadow:0 0 0 3px var(--blue-bg);animation:glow 1.5s infinite}
+.tl-dot.pending  {background:var(--dim);box-shadow:0 0 0 3px var(--border2)}
+@keyframes glow{0%,100%{box-shadow:0 0 0 3px rgba(88,166,255,.15)}50%{box-shadow:0 0 0 6px rgba(88,166,255,.35)}}
+.tl-line{width:2px;flex:1;background:var(--border);margin:4px 0;min-height:14px}
+.tl-card{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px;cursor:pointer;transition:border-color .15s}
+.tl-card:hover{border-color:var(--blue-bd)}
+.tl-card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.tl-ico{font-size:15px}
+.tl-name{font-size:13px;font-weight:600;color:#f0f6fc;flex:1}
+.tl-dur{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--border2);color:var(--muted)}
+.tl-range{font-size:10px;color:var(--dim);margin-left:4px}
+.tl-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:6px}
+.tl-tags{display:flex;flex-wrap:wrap;gap:4px}
+.ttag{font-size:10px;padding:2px 7px;border-radius:4px}
+.ttag.g{background:var(--green-bg);color:var(--green)}
+.ttag.b{background:var(--blue-bg);color:var(--blue)}
+.ttag.y{background:var(--yellow-bg);color:var(--yellow)}
+.ttag.r{background:var(--red-bg);color:var(--red)}
+
+/* ── RIGHT PANEL ── */
+.right{width:240px;flex-shrink:0;border-left:1px solid var(--border);overflow-y:auto;background:var(--surface)}
+.right::-webkit-scrollbar{width:3px}
+.right::-webkit-scrollbar-thumb{background:var(--border)}
+.rsec{padding:12px 14px;border-bottom:1px solid var(--border)}
+.rsec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:10px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px}
+.stat-label{color:#c9d1d9}
+.stat-v{font-weight:700}
+.stat-v.g{color:var(--green)}.stat-v.b{color:var(--blue)}.stat-v.y{color:var(--yellow)}.stat-v.r{color:var(--red)}.stat-v.m{color:var(--muted)}
+.ov-bar{background:var(--border2);border-radius:3px;height:5px;overflow:hidden;margin:2px 0 8px}
+.ov-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#238636,#3fb950);transition:width .5s}
+
+.mr-link{display:flex;align-items:center;gap:8px;background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:7px;padding:9px 11px;text-decoration:none;color:var(--blue);font-size:12px;font-weight:600;transition:background .15s}
+.mr-link:hover{background:#264a75}
+.mr-meta{font-size:10px;color:var(--muted);line-height:1.7;margin-top:6px}
+
+.ci-item{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--border2);font-size:11px}
+.ci-item:last-child{border:none}
+.ci-name{flex:1;color:#c9d1d9}
+.ci-s{font-size:10px;font-weight:700}
+.ci-s.pass{color:var(--green)}.ci-s.run{color:var(--blue)}.ci-s.pend{color:var(--muted)}.ci-s.fail{color:var(--red)}
+
+.speed-row{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:4px}
+input[type=range]{width:100%;accent-color:var(--blue);cursor:pointer}
+.btn-row{display:flex;gap:6px;margin-top:8px}
+.btn-row .btn{flex:1;justify-content:center}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">🔁</div>
+  <span class="brand">DevLoop</span>
+  <div class="sep"></div>
+  <div class="ticket-chip" style="display:flex;align-items:center;gap:8px">
+    <span class="tid">PROD-1</span>
+    <span class="ttitle">Add discount field to Product entity</span>
+  </div>
+  <div class="sp"></div>
+  <div class="pill" id="global-pill"><div class="dot"></div><span id="global-txt">Pipeline Complete</span></div>
+  <button class="btn red" onclick="clearLogs()">🗑 Clear Logs</button>
+  <button class="btn blue" id="replay-btn" onclick="startReplay()">▶ Replay</button>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT: agent list -->
+  <div class="left">
+    <div class="left-head">
+      <span class="lh-title">Agents</span>
+      <div class="prog-mini">
+        <div class="bar-mini"><div class="bar-fill" id="mini-fill" style="width:100%"></div></div>
+        <span id="mini-txt" style="color:var(--green)">10/10</span>
+      </div>
+    </div>
+    <div class="agent-scroll" id="agent-list"></div>
+  </div>
+
+  <!-- CENTER: tabs -->
+  <div class="center">
+    <div class="tabs">
+      <div class="tab on" id="tab-btn-output" onclick="showTab('output')">⚡ Output</div>
+      <div class="tab" id="tab-btn-logs"   onclick="showTab('logs')">📋 Logs<span class="badge" id="log-cnt">67</span></div>
+      <div class="tab" id="tab-btn-tl"     onclick="showTab('tl')">⏱ Timeline</div>
+    </div>
+
+    <!-- OUTPUT PANE -->
+    <div class="pane on" id="pane-output">
+      <div class="out-wrap" id="out-wrap">
+        <div class="no-sel" id="no-sel">
+          <div class="ns-ico">🤖</div>
+          <div>Click an agent in the left panel to view its output and logs</div>
+        </div>
+        <div id="out-content" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- LOGS PANE -->
+    <div class="pane" id="pane-logs">
+      <div class="log-bar">
+        <input class="log-search" id="log-search" placeholder="🔍 Search logs..." oninput="applyLogFilters()">
+        <div class="filter-sep"></div>
+        <div class="af-row" id="agent-filters">
+          <!-- built by JS -->
+        </div>
+        <div class="filter-sep"></div>
+        <button class="tf on all" onclick="setTypeFilter('all',this)">All</button>
+        <button class="tf ok"  onclick="setTypeFilter('ok',this)">✅ OK</button>
+        <button class="tf info" onclick="setTypeFilter('info',this)">ℹ Info</button>
+        <button class="tf warn" onclick="setTypeFilter('warn',this)">⚠ Warn</button>
+        <button class="tf err"  onclick="setTypeFilter('err',this)">❌ Err</button>
+        <div class="filter-sep"></div>
+        <button class="btn" onclick="scrollLogBottom()">↓</button>
+        <button class="btn red" onclick="clearLogs()">🗑</button>
+      </div>
+      <div class="log-body" id="log-body"></div>
+    </div>
+
+    <!-- TIMELINE PANE -->
+    <div class="pane" id="pane-tl">
+      <div class="tl-wrap" id="tl-wrap"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: stats -->
+  <div class="right">
+    <div class="rsec">
+      <div class="rsec-title">Progress</div>
+      <div class="stat-row"><span class="stat-label">Completed</span><span class="stat-v g" id="s-done">10</span></div>
+      <div class="ov-bar"><div class="ov-fill" id="ov-fill" style="width:100%"></div></div>
+      <div class="stat-row"><span class="stat-label">Running</span><span class="stat-v b" id="s-run">0</span></div>
+      <div class="stat-row"><span class="stat-label">Pending</span><span class="stat-v m" id="s-pend">0</span></div>
+      <div class="stat-row"><span class="stat-label">Failed</span><span class="stat-v r" id="s-fail">0</span></div>
+      <div class="stat-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border2)">
+        <span class="stat-label">Duration</span><span class="stat-v m" id="s-dur">7m 01s</span>
+      </div>
+    </div>
+
+    <div class="rsec">
+      <div class="rsec-title">Merge Request</div>
+      <a class="mr-link" href="https://gitlab.com/neelimabarji/devloop-demo/-/merge_requests/1" target="_blank">🔀 MR !1 — feature/prod-1</a>
+      <div class="mr-meta">📁 9 files pushed<br>🧪 8 unit · 4 integration<br>📋 PROD-1-test-report.md<br>🎯 Target: master</div>
+    </div>
+
+    <div class="rsec">
+      <div class="rsec-title">CI Pipeline</div>
+      <div class="ci-item"><span>🏗</span><span class="ci-name">backend-build</span><span class="ci-s pass">passed</span></div>
+      <div class="ci-item"><span>🧪</span><span class="ci-name">backend-test</span><span class="ci-s pass">passed</span></div>
+      <div class="ci-item"><span>⚛️</span><span class="ci-name">frontend-build</span><span class="ci-s pass">passed</span></div>
+      <div class="ci-item"><span>🧪</span><span class="ci-name">frontend-test</span><span class="ci-s pass">passed</span></div>
+      <div class="ci-item"><span>🛡</span><span class="ci-name">security-scan</span><span class="ci-s pass">passed</span></div>
+      <div class="ci-item"><span>📣</span><span class="ci-name">pipeline-summary</span><span class="ci-s pass">passed</span></div>
+    </div>
+
+    <div class="rsec">
+      <div class="rsec-title">Demo Controls</div>
+      <div class="speed-row"><span>Replay speed</span><span id="spd-lbl">800ms</span></div>
+      <input type="range" min="200" max="2000" value="800" step="100" id="spd" oninput="document.getElementById('spd-lbl').textContent=this.value+'ms'">
+      <div class="btn-row">
+        <button class="btn blue" onclick="startReplay()">▶ Replay</button>
+        <button class="btn" onclick="resetDone()">⏭ Skip</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const AGENTS = [
+  { key:'orchestrator', icon:'🎯', name:'OrchestratorAgent', sub:'Reads Jira ticket · classifies change',
+    start:'13:23:00', end:'13:23:12', dur:'0:12',
+    desc:'Fetched PROD-1 from Jira mock. Classified as BACKEND change. Output context JSON with branch name feature/prod-1 and 3 acceptance criteria.',
+    out:{'ticket_id':'PROD-1','title':'Add discount field to Product entity','change_type':'BACKEND','branch':'feature/prod-1','affected_files':'Product.java, ProductService.java, data.sql','acceptance_criteria':'3 items'},
+    tags:[['BACKEND','b'],['feature/prod-1','g'],['Jira #PROD-1','b']]
+  },
+  { key:'analysis', icon:'🔍', name:'AnalysisAgent', sub:'Reads codebase · maps dependencies',
+    start:'13:24:02', end:'13:24:33', dur:'0:31',
+    desc:'Scanned backend codebase. Identified 6 files needing changes. No breaking API changes — purely additive. DB migration required.',
+    out:{'files_to_change':'6','impact':'LOW — additive field only','migration_needed':'Yes (ALTER TABLE)','test_strategy':'Unit + Integration','risk_level':'LOW'},
+    tags:[['6 files','b'],['LOW risk','g'],['Migration needed','y']]
+  },
+  { key:'dev', icon:'💻', name:'DevAgent', sub:'Generates code · writes files',
+    start:'13:25:13', end:'13:27:07', dur:'1:54',
+    desc:'Added discount DECIMAL(3,2) field to Product entity with @DecimalMin/@DecimalMax validation. Updated service update() method. Created SQL migration. Updated seed data.',
+    out:{'files_modified':'6','build_status':'SUCCESS ✅','new_field':'discount DECIMAL(3,2)','validation':'@DecimalMin(0.0) / @DecimalMax(1.0)','migration':'V1__add_discount_to_product_table.sql'},
+    tags:[['6 modified','b'],['BUILD OK','g'],['New column','g']],
+    files:[{n:'Product.java',t:'mod'},{n:'ProductService.java',t:'mod'},{n:'ProductController.java',t:'mod'},{n:'data.sql',t:'mod'},{n:'V1__add_discount.sql',t:'new'},{n:'pom.xml',t:'mod'}]
+  },
+  { key:'testgen', icon:'🧪', name:'TestGeneratorAgent', sub:'Writes unit tests for new changes',
+    start:'13:27:47', end:'13:28:39', dur:'0:52',
+    desc:'Generated 8 unit tests covering all discount CRUD operations and boundary validation. All tests use MockMvc + JUnit 5.',
+    out:{'tests_written':'8','file':'ProductControllerTest.java','coverage':'~85%','framework':'JUnit 5 + MockMvc','edge_cases':'Invalid discount values (>1.0, <0)'},
+    tags:[['8 tests','g'],['85% coverage','g'],['JUnit 5','b']],
+    files:[{n:'ProductControllerTest.java',t:'mod'}]
+  },
+  { key:'inttest', icon:'🔗', name:'IntegrationTestAgent', sub:'Runs API tests · validates E2E',
+    start:'13:29:19', end:'13:30:03', dur:'0:44',
+    desc:'Executed 4 integration tests against live backend at localhost:8080. All passed. Discount field correctly serialized in all API responses.',
+    out:{'tests_run':'4','passed':'4 ✅','failed':'0','endpoint':'http://localhost:8080/api/products','avg_response_time':'48ms'},
+    tags:[['4/4 passed','g'],['localhost:8080','b'],['48ms avg','g']]
+  },
+  { key:'testdoc', icon:'📄', name:'TestDocAgent', sub:'Generates test report markdown',
+    start:'13:30:43', end:'13:31:22', dur:'0:39',
+    desc:'Generated PROD-1-test-report.md covering 7 ACs, 8 unit tests, 4 integration tests, files changed table, and verification steps.',
+    out:{'report':'test-reports/PROD-1-test-report.md','ac_covered':'7/7','sections':'Summary, AC Coverage, Unit Tests, Integration, Files, Verify','format':'Markdown'},
+    tags:[['Report saved','g'],['7/7 ACs','g']],
+    files:[{n:'PROD-1-test-report.md',t:'new'}]
+  },
+  { key:'mr', icon:'🔀', name:'MRAgent', sub:'Creates branch · pushes files · opens MR',
+    start:'13:32:02', end:'13:32:50', dur:'0:48',
+    desc:'Created feature/prod-1 branch from master. Pushed all 9 changed files via GitLab API. Opened MR !1 with detailed description and AC checklist.',
+    out:{'branch':'feature/prod-1','files_pushed':'9','mr_id':'!1','mr_url':'gitlab.com/neelimabarji/devloop-demo/-/merge_requests/1','target':'master'},
+    tags:[['Branch created','g'],['9 files pushed','b'],['MR !1 open','g']],
+    files:[{n:'Product.java',t:'mod'},{n:'ProductService.java',t:'mod'},{n:'ProductController.java',t:'mod'},{n:'data.sql',t:'mod'},{n:'V1__add_discount.sql',t:'new'},{n:'ProductControllerTest.java',t:'mod'},{n:'pom.xml',t:'mod'},{n:'.gitlab-ci.yml',t:'mod'},{n:'PROD-1-test-report.md',t:'new'}]
+  },
+  { key:'review', icon:'👁️', name:'ReviewAgent', sub:'Reviews MR diff · posts inline comments',
+    start:'13:33:30', end:'13:34:12', dur:'0:42',
+    desc:'Read MR !1 diff across 9 files. Posted 2 inline review comments suggesting a default value and a DB index on the discount column.',
+    out:{'files_reviewed':'9','comments_posted':'2','severity':'LOW','approval':'Conditional ⚠️'},
+    tags:[['2 comments','y'],['LOW severity','g'],['Conditional','y']]
+  },
+  { key:'fix', icon:'🔧', name:'FixAgent', sub:'Resolves review comments · updates code',
+    start:'13:34:52', end:'13:35:41', dur:'0:49',
+    desc:'Resolved both review comments. Added DEFAULT 0.00 to discount column definition and @Index(name="idx_discount") annotation on the entity.',
+    out:{'comments_resolved':'2/2 ✅','change_1':'columnDefinition = "DECIMAL(3,2) DEFAULT 0.00"','change_2':'@Index(name="idx_discount", columnList="discount")','commit':'[PROD-1] Address review comments'},
+    tags:[['2/2 resolved','g'],['Index added','b'],['Default set','b']]
+  },
+  { key:'security', icon:'🛡️', name:'SecurityAgent', sub:'CVE scan · OWASP dependency check',
+    start:'13:36:21', end:'13:36:41', dur:'0:20',
+    desc:'Ran OWASP Dependency-Check on pom.xml. Zero critical or high CVEs. 2 medium CVEs suppressed (pre-existing Spring Boot transitives).',
+    out:{'tool':'OWASP Dependency-Check','critical_cves':'0 ✅','high_cves':'0 ✅','medium_cves':'2 (suppressed, pre-existing)','result':'PASSED ✅'},
+    tags:[['0 critical','g'],['0 high','g'],['PASSED','g']]
+  }
+];
+
+const ALL_LOGS = [
+  {ts:'13:23:00',ag:'system',      t:'info', m:'🚀 DevLoop pipeline started for ticket PROD-1'},
+  {ts:'13:23:00',ag:'orchestrator',t:'info', m:'Fetching Jira ticket: PROD-1'},
+  {ts:'13:23:03',ag:'orchestrator',t:'ok',   m:'Ticket fetched: "Add discount field to Product entity"'},
+  {ts:'13:23:06',ag:'orchestrator',t:'ok',   m:'Change type classified: BACKEND'},
+  {ts:'13:23:10',ag:'orchestrator',t:'ok',   m:'Branch name set: feature/prod-1'},
+  {ts:'13:23:12',ag:'orchestrator',t:'ok',   m:'✅ OrchestratorAgent complete (0:12)'},
+  {ts:'13:23:12',ag:'system',      t:'dim',  m:'⏳ Pacing 40s — free tier rate limit prevention'},
+  {ts:'13:23:52',ag:'analysis',    t:'info', m:'Reading codebase structure...'},
+  {ts:'13:24:02',ag:'analysis',    t:'info', m:'Scanning: backend/src/main/java/com/devloop/product/'},
+  {ts:'13:24:10',ag:'analysis',    t:'ok',   m:'Found entity: Product.java — needs discount field'},
+  {ts:'13:24:14',ag:'analysis',    t:'ok',   m:'Found service: ProductService.java — update() needs discount'},
+  {ts:'13:24:18',ag:'analysis',    t:'ok',   m:'DB migration required: ALTER TABLE product ADD COLUMN discount'},
+  {ts:'13:24:22',ag:'analysis',    t:'info', m:'Impact assessment: LOW — additive field, no breaking changes'},
+  {ts:'13:24:33',ag:'analysis',    t:'ok',   m:'✅ AnalysisAgent complete (0:31)'},
+  {ts:'13:24:33',ag:'system',      t:'dim',  m:'⏳ Pacing 40s...'},
+  {ts:'13:25:13',ag:'dev',         t:'info', m:'Starting code generation for BACKEND changes...'},
+  {ts:'13:25:20',ag:'dev',         t:'info', m:'Writing Product.java — adding discount field with validation'},
+  {ts:'13:25:28',ag:'dev',         t:'ok',   m:'Product.java: discount field + @DecimalMin(0.0) @DecimalMax(1.0) added'},
+  {ts:'13:25:35',ag:'dev',         t:'info', m:'Writing ProductService.java — adding setDiscount() in update()'},
+  {ts:'13:25:42',ag:'dev',         t:'ok',   m:'ProductService.java: update() now sets discount on existing product'},
+  {ts:'13:25:50',ag:'dev',         t:'info', m:'Creating SQL migration file...'},
+  {ts:'13:25:55',ag:'dev',         t:'ok',   m:'Created: V1__add_discount_to_product_table.sql'},
+  {ts:'13:26:02',ag:'dev',         t:'info', m:'Updating data.sql with discount values for all 7 seed products'},
+  {ts:'13:26:12',ag:'dev',         t:'ok',   m:'data.sql: 7 INSERT statements updated with discount values'},
+  {ts:'13:26:30',ag:'dev',         t:'info', m:'Running Maven build to verify changes compile...'},
+  {ts:'13:27:00',ag:'dev',         t:'ok',   m:'BUILD SUCCESS — 0 compile errors, 0 warnings'},
+  {ts:'13:27:07',ag:'dev',         t:'ok',   m:'✅ DevAgent complete (1:54) — 6 files modified'},
+  {ts:'13:27:07',ag:'system',      t:'dim',  m:'⏳ Pacing 40s...'},
+  {ts:'13:27:47',ag:'testgen',     t:'info', m:'Generating unit tests for discount field...'},
+  {ts:'13:27:55',ag:'testgen',     t:'warn', m:'MCP tool timeout (5s) — continuing with cached codebase context'},
+  {ts:'13:28:05',ag:'testgen',     t:'ok',   m:'Test written: findAll_returnsProductList (discount assertion added)'},
+  {ts:'13:28:09',ag:'testgen',     t:'ok',   m:'Test written: findById_returnsProductWithDiscount (new)'},
+  {ts:'13:28:13',ag:'testgen',     t:'ok',   m:'Test written: create_validProduct_returnsCreated (discount 0.10)'},
+  {ts:'13:28:17',ag:'testgen',     t:'ok',   m:'Test written: create_productWithInvalidDiscount_returnsBadRequest (>1.0)'},
+  {ts:'13:28:21',ag:'testgen',     t:'ok',   m:'Test written: update_validProductWithDiscount_returnsOk (0.20)'},
+  {ts:'13:28:25',ag:'testgen',     t:'ok',   m:'Test written: update_productWithInvalidDiscount_returnsBadRequest (<0)'},
+  {ts:'13:28:29',ag:'testgen',     t:'ok',   m:'Test written: lowStock_returnsFilteredProducts (regression)'},
+  {ts:'13:28:33',ag:'testgen',     t:'ok',   m:'Test written: findById_notFound_returnsBadRequest (regression)'},
+  {ts:'13:28:39',ag:'testgen',     t:'ok',   m:'✅ TestGeneratorAgent complete — 8 tests written (0:52)'},
+  {ts:'13:28:39',ag:'system',      t:'dim',  m:'⏳ Pacing 40s...'},
+  {ts:'13:29:19',ag:'inttest',     t:'info', m:'Starting integration tests against http://localhost:8080'},
+  {ts:'13:29:25',ag:'inttest',     t:'ok',   m:'GET /api/products → 200 OK | discount field present in all 7 responses'},
+  {ts:'13:29:33',ag:'inttest',     t:'ok',   m:'POST /api/products {discount:0.25} → 201 Created | discount persisted'},
+  {ts:'13:29:41',ag:'inttest',     t:'ok',   m:'PUT /api/products/1 {discount:0.30} → 200 OK | discount updated'},
+  {ts:'13:29:49',ag:'inttest',     t:'ok',   m:'POST /api/products {discount:1.50} → 400 Bad Request | validation working'},
+  {ts:'13:30:03',ag:'inttest',     t:'ok',   m:'✅ IntegrationTestAgent complete — 4/4 passed (0:44)'},
+  {ts:'13:30:03',ag:'system',      t:'dim',  m:'⏳ Pacing 40s...'},
+  {ts:'13:30:43',ag:'testdoc',     t:'info', m:'Generating test documentation for PROD-1...'},
+  {ts:'13:30:55',ag:'testdoc',     t:'ok',   m:'Written: Executive Summary (8 unit + 4 integration)'},
+  {ts:'13:31:02',ag:'testdoc',     t:'ok',   m:'Written: AC Coverage table (7/7 acceptance criteria covered)'},
+  {ts:'13:31:10',ag:'testdoc',     t:'ok',   m:'Written: Files Changed table with change types'},
+  {ts:'13:31:18',ag:'testdoc',     t:'ok',   m:'Report saved to: test-reports/PROD-1-test-report.md'},
+  {ts:'13:31:22',ag:'testdoc',     t:'ok',   m:'✅ TestDocAgent complete (0:39)'},
+  {ts:'13:31:22',ag:'system',      t:'dim',  m:'⏳ Pacing 40s...'},
+  {ts:'13:32:02',ag:'mr',          t:'info', m:'Creating GitLab branch: feature/prod-1 from master'},
+  {ts:'13:32:08',ag:'mr',          t:'ok',   m:'Branch created: feature/prod-1 ✅'},
+  {ts:'13:32:10',ag:'mr',          t:'info', m:'Pushing 9 files to branch feature/prod-1...'},
+  {ts:'13:32:15',ag:'mr',          t:'ok',   m:'Pushed ✅ backend/.../Product.java'},
+  {ts:'13:32:18',ag:'mr',          t:'ok',   m:'Pushed ✅ backend/.../ProductService.java'},
+  {ts:'13:32:21',ag:'mr',          t:'ok',   m:'Pushed ✅ backend/.../ProductController.java'},
+  {ts:'13:32:24',ag:'mr',          t:'ok',   m:'Pushed ✅ backend/src/main/resources/data.sql'},
+  {ts:'13:32:27',ag:'mr',          t:'ok',   m:'Pushed ✅ backend/src/main/resources/db/migration/V1__add_discount.sql'},
+  {ts:'13:32:30',ag:'mr',          t:'ok',   m:'Pushed ✅ backend/.../ProductControllerTest.java'},
+  {ts:'13:32:33',ag:'mr',          t:'ok',   m:'Pushed ✅ backend/pom.xml'},
+  {ts:'13:32:36',ag:'mr',          t:'ok',   m:'Pushed ✅ .gitlab-ci.yml'},
+  {ts:'13:32:39',ag:'mr',          t:'ok',   m:'Pushed ✅ test-reports/PROD-1-test-report.md'},
+  {ts:'13:32:44',ag:'mr',          t:'ok',   m:'MR !1 created: [PROD-1] Add discount field to Product entity'},
+  {ts:'13:32:50',ag:'mr',          t:'ok',   m:'✅ MRAgent complete — MR !1 live at gitlab.com (0:48)'},
+  {ts:'13:32:50',ag:'system',      t:'dim',  m:'⏳ Pacing 40s...'},
+  {ts:'13:33:30',ag:'review',      t:'info', m:'Fetching diff for MR !1...'},
+  {ts:'13:33:38',ag:'review',      t:'info', m:'Reviewing 9 changed files in MR !1...'},
+  {ts:'13:33:50',ag:'review',      t:'warn', m:'💬 Comment: Product.java — consider adding default value (null vs 0.00)'},
+  {ts:'13:34:00',ag:'review',      t:'warn', m:'💬 Comment: Product.java — add DB index on discount for range queries'},
+  {ts:'13:34:08',ag:'review',      t:'ok',   m:'2 review comments posted on MR !1'},
+  {ts:'13:34:12',ag:'review',      t:'ok',   m:'✅ ReviewAgent complete (0:42)'},
+  {ts:'13:34:12',ag:'system',      t:'dim',  m:'⏳ Pacing 40s...'},
+  {ts:'13:34:52',ag:'fix',         t:'info', m:'Reading 2 open comments from MR !1...'},
+  {ts:'13:35:00',ag:'fix',         t:'info', m:'Fix 1: Adding columnDefinition = "DECIMAL(3,2) DEFAULT 0.00"'},
+  {ts:'13:35:10',ag:'fix',         t:'ok',   m:'Product.java updated — discount now defaults to 0.00'},
+  {ts:'13:35:18',ag:'fix',         t:'info', m:'Fix 2: Adding @Index(name="idx_discount", columnList="discount")'},
+  {ts:'13:35:28',ag:'fix',         t:'ok',   m:'Product.java updated — discount column indexed'},
+  {ts:'13:35:35',ag:'fix',         t:'ok',   m:'Changes committed to feature/prod-1: "[PROD-1] Address review comments"'},
+  {ts:'13:35:41',ag:'fix',         t:'ok',   m:'✅ FixAgent complete — 2/2 review comments resolved (0:49)'},
+  {ts:'13:35:41',ag:'system',      t:'dim',  m:'⏳ Pacing 40s...'},
+  {ts:'13:36:21',ag:'security',    t:'info', m:'Running OWASP Dependency-Check on backend/pom.xml...'},
+  {ts:'13:36:28',ag:'security',    t:'ok',   m:'spring-boot-starter-web 3.2.5 — no critical CVEs'},
+  {ts:'13:36:30',ag:'security',    t:'ok',   m:'spring-boot-starter-data-jpa 3.2.5 — no critical CVEs'},
+  {ts:'13:36:32',ag:'security',    t:'ok',   m:'h2database 2.x — no critical CVEs'},
+  {ts:'13:36:36',ag:'security',    t:'warn', m:'2 medium CVEs found in transitives — suppressed (pre-existing, non-applicable)'},
+  {ts:'13:36:39',ag:'security',    t:'ok',   m:'CRITICAL: 0  |  HIGH: 0  |  MEDIUM: 2 (suppressed)'},
+  {ts:'13:36:41',ag:'security',    t:'ok',   m:'✅ SecurityAgent complete — PASSED (0:20)'},
+  {ts:'13:36:41',ag:'system',      t:'ok',   m:'🎉 DevLoop Pipeline Complete! Total duration: 7m 01s'}
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let agentStates = {};
+AGENTS.forEach(a => agentStates[a.key] = 'completed');
+
+let selectedKey = null;
+let typeFilter  = 'all';
+let agentFilter = 'all';  // 'all' or agent key
+let logCleared  = false;
+
+// ══════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════
+function showTab(name) {
+  ['output','logs','tl'].forEach(t => {
+    document.getElementById('tab-btn-'+t).classList.toggle('on', t===name);
+    document.getElementById('pane-'+t).classList.toggle('on', t===name);
+  });
+  if (name === 'logs') { setTimeout(scrollLogBottom, 60); }
+}
+
+// ══════════════════════════════════════════
+// LEFT PANEL
+// ══════════════════════════════════════════
+function buildAgentList() {
+  const el = document.getElementById('agent-list');
+  el.innerHTML = '';
+  AGENTS.forEach((a, i) => {
+    if (i > 0) {
+      const line = document.createElement('div');
+      line.className = 'conn-line';
+      el.appendChild(line);
+    }
+    const st = agentStates[a.key] || 'pending';
+    const div = document.createElement('div');
+    div.className = `a-item s-${st}${selectedKey===a.key?' sel':''}`;
+    div.id = 'ai-' + a.key;
+    div.onclick = () => clickAgent(a.key);
+    const badgeLabel = {completed:'✓',running:'●',pending:'—',failed:'✗'}[st]||'—';
+    div.innerHTML = `
+      <div class="a-ico">${a.icon}</div>
+      <div class="a-body">
+        <div class="a-name">${a.name}</div>
+        <div class="a-sub">${a.sub}</div>
+      </div>
+      <span class="a-badge ${st}">${badgeLabel}</span>`;
+    el.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════
+// CLICK AGENT — always shows Output + logs
+// ══════════════════════════════════════════
+function clickAgent(key) {
+  selectedKey = key;
+
+  // highlight in left panel
+  document.querySelectorAll('.a-item').forEach(el => el.classList.remove('sel'));
+  const item = document.getElementById('ai-'+key);
+  if (item) { item.classList.add('sel'); item.scrollIntoView({block:'nearest'}); }
+
+  // render output panel
+  renderOutput(key);
+
+  // switch to Output tab
+  showTab('output');
+
+  // also update agent filter in logs pane to this agent
+  agentFilter = key;
+  updateAgentFilterButtons();
+}
+
+// ══════════════════════════════════════════
+// OUTPUT PANEL
+// ══════════════════════════════════════════
+function renderOutput(key) {
+  const a = AGENTS.find(x => x.key === key);
+  if (!a) return;
+  const st = agentStates[key] || 'pending';
+
+  document.getElementById('no-sel').style.display = 'none';
+  const wrap = document.getElementById('out-content');
+  wrap.style.display = 'block';
+
+  // output key-values
+  const outRows = Object.entries(a.out).map(([k,v]) => {
+    const cls = v.includes('✅') ? 'g' : (v.includes('✗')||v.includes('FAIL')) ? 'r' : '';
+    return `<div class="kv"><span class="k">${k}</span><span class="v ${cls}">${esc(v)}</span></div>`;
+  }).join('');
+
+  // files
+  const filesHtml = a.files ? `
+    <div class="card full">
+      <h4>Files Touched</h4>
+      ${a.files.map(f=>`<div class="file-row"><span>📄</span><span style="flex:1;color:var(--green)">${f.n}</span><span class="ftag ${f.t}">${f.t}</span></div>`).join('')}
+    </div>` : '';
+
+  // tags
+  const tagsHtml = (a.tags||[]).map(([t,c])=>`<span class="ttag ${c}">${t}</span>`).join('');
+
+  // agent logs (inline, always visible)
+  const agLogs = ALL_LOGS.filter(l => l.ag === key);
+  const logHtml = agLogs.map(l => `
+    <div class="ilog-line ${l.t}">
+      <span class="ilog-ts">${l.ts}</span>
+      <span class="ilog-msg">${esc(l.m)}</span>
+    </div>`).join('') || '<div style="padding:10px;color:var(--dim);font-size:11px">No log entries for this agent</div>';
+
+  wrap.innerHTML = `
+    <div class="agent-hdr">
+      <div class="agent-big ${st}">${a.icon}</div>
+      <div>
+        <div class="agent-ttl">${a.name}</div>
+        <div class="agent-sub2">${a.sub}</div>
+      </div>
+      <span class="spill ${st}">${st==='completed'?'✓ Completed':st==='running'?'● Running':st==='failed'?'✗ Failed':'— Pending'}</span>
+    </div>
+
+    <div class="card full" style="margin-bottom:10px">
+      <h4>Summary</h4>
+      <div style="font-size:12px;color:#c9d1d9;line-height:1.7;margin-bottom:8px">${esc(a.desc)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${tagsHtml}</div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h4>Output</h4>
+        ${outRows}
+      </div>
+      <div class="card">
+        <h4>Timing</h4>
+        <div class="kv"><span class="k">started</span><span class="v">${a.start}</span></div>
+        <div class="kv"><span class="k">ended</span><span class="v">${a.end}</span></div>
+        <div class="kv"><span class="k">duration</span><span class="v g">${a.dur}</span></div>
+        <div class="kv" style="margin-top:10px"><span class="k">log entries</span><span class="v b">${agLogs.length}</span></div>
+      </div>
+      ${filesHtml}
+    </div>
+
+    <div class="card full" style="margin-top:10px">
+      <div class="ilog-hdr">
+        <h4>Agent Logs — ${agLogs.length} entries</h4>
+        <button class="btn" style="font-size:10px;padding:3px 8px" onclick="jumpToAgentLogs('${key}')">Open in Logs tab ↗</button>
+      </div>
+      <div class="ilog-body">${logHtml}</div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════
+// LOGS PANE
+// ══════════════════════════════════════════
+function buildLogBody() {
+  const body = document.getElementById('log-body');
+  body.innerHTML = '';
+  ALL_LOGS.forEach(l => {
+    const row = document.createElement('div');
+    row.className = `log-row ${l.t}`;
+    row.dataset.ag = l.ag;
+    row.dataset.t  = l.t;
+    row.dataset.m  = l.m.toLowerCase();
+    row.innerHTML  = `
+      <span class="lr-ts">${l.ts}</span>
+      <span class="lr-agent"><span class="tag-${l.ag}">${l.ag}</span></span>
+      <span class="lr-msg">${esc(l.m)}</span>`;
+    body.appendChild(row);
+  });
+  applyLogFilters();
+}
+
+function buildAgentFilterButtons() {
+  const wrap = document.getElementById('agent-filters');
+  wrap.innerHTML = `<button class="af on" data-ag="all" onclick="setAgentFilter('all',this)">All</button>`;
+  AGENTS.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'af';
+    btn.dataset.ag = a.key;
+    btn.textContent = a.icon + ' ' + a.name.replace('Agent','');
+    btn.onclick = () => setAgentFilter(a.key, btn);
+    wrap.appendChild(btn);
+  });
+}
+
+function setAgentFilter(key, btn) {
+  agentFilter = key;
+  updateAgentFilterButtons();
+  applyLogFilters();
+}
+
+function updateAgentFilterButtons() {
+  document.querySelectorAll('.af').forEach(b => {
+    b.classList.toggle('on', b.dataset.ag === agentFilter);
+  });
+}
+
+function setTypeFilter(f, btn) {
+  typeFilter = f;
+  document.querySelectorAll('.tf').forEach(b => {
+    b.classList.remove('on','all','ok','info','warn','err');
+  });
+  btn.classList.add('on', f);
+  applyLogFilters();
+}
+
+function applyLogFilters() {
+  if (logCleared) return;
+  const search = document.getElementById('log-search').value.toLowerCase().trim();
+  let visible = 0;
+  document.querySelectorAll('#log-body .log-row').forEach(row => {
+    const matchAgent  = agentFilter === 'all' || row.dataset.ag === agentFilter;
+    const matchType   = typeFilter  === 'all' || row.dataset.t  === typeFilter;
+    const matchSearch = !search || row.dataset.m.includes(search) || row.dataset.ag.includes(search);
+    const show = matchAgent && matchType && matchSearch;
+    row.classList.toggle('hidden', !show);
+    if (show) visible++;
+  });
+  document.getElementById('log-cnt').textContent = visible;
+}
+
+// Jump to logs tab filtered to this agent
+function jumpToAgentLogs(key) {
+  agentFilter = key;
+  updateAgentFilterButtons();
+  applyLogFilters();
+  showTab('logs');
+  setTimeout(() => {
+    const first = document.querySelector('#log-body .log-row:not(.hidden)');
+    if (first) first.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 80);
+}
+
+function scrollLogBottom() {
+  const b = document.getElementById('log-body');
+  b.scrollTop = b.scrollHeight;
+}
+
+function clearLogs() {
+  logCleared = true;
+  document.getElementById('log-body').innerHTML =
+    '<div style="padding:40px;text-align:center;color:var(--dim);font-size:13px">Logs cleared. Run the pipeline to see new output.</div>';
+  document.getElementById('log-cnt').textContent = '0';
+}
+
+// ══════════════════════════════════════════
+// TIMELINE
+// ══════════════════════════════════════════
+function buildTimeline() {
+  const wrap = document.getElementById('tl-wrap');
+  wrap.innerHTML = '';
+  AGENTS.forEach((a, i) => {
+    const st = agentStates[a.key] || 'pending';
+    const tagsHtml = (a.tags||[]).map(([t,c])=>`<span class="ttag ${c}">${t}</span>`).join('');
+    const div = document.createElement('div');
+    div.className = 'tl-item';
+    div.innerHTML = `
+      <div class="tl-col">
+        <div class="tl-dot ${st}"></div>
+        ${i < AGENTS.length-1 ? '<div class="tl-line"></div>' : ''}
+      </div>
+      <div class="tl-card" onclick="clickAgent('${a.key}')">
+        <div class="tl-card-hdr">
+          <span class="tl-ico">${a.icon}</span>
+          <span class="tl-name">${a.name}</span>
+          <span class="tl-range">${a.start}→${a.end}</span>
+          <span class="tl-dur">${st==='completed'?a.dur:st==='running'?'running…':'waiting'}</span>
+        </div>
+        <div class="tl-desc">${a.desc.slice(0,100)}…</div>
+        <div class="tl-tags">${tagsHtml}</div>
+      </div>`;
+    wrap.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════
+function updateStats() {
+  const vals = Object.values(agentStates);
+  const done = vals.filter(s=>s==='completed').length;
+  const run  = vals.filter(s=>s==='running').length;
+  const pend = vals.filter(s=>s==='pending').length;
+  const fail = vals.filter(s=>s==='failed').length;
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-run').textContent  = run;
+  document.getElementById('s-pend').textContent = pend;
+  document.getElementById('s-fail').textContent = fail;
+  const pct = Math.round(done / AGENTS.length * 100);
+  document.getElementById('ov-fill').style.width  = pct + '%';
+  document.getElementById('mini-fill').style.width = pct + '%';
+  document.getElementById('mini-txt').textContent  = `${done}/${AGENTS.length}`;
+  document.getElementById('mini-txt').style.color  = run>0?'var(--blue)':done===AGENTS.length?'var(--green)':'var(--muted)';
+  const pill = document.getElementById('global-pill');
+  const dot  = pill.querySelector('.dot');
+  const txt  = document.getElementById('global-txt');
+  if (run > 0) {
+    pill.className = 'pill running'; dot.className = 'dot pulse'; txt.textContent = 'Running';
+  } else if (done === AGENTS.length) {
+    pill.className = 'pill'; dot.className = 'dot'; txt.textContent = 'Pipeline Complete';
+  } else {
+    pill.className = 'pill'; dot.className = 'dot'; txt.textContent = 'Idle';
+  }
+}
+
+// ══════════════════════════════════════════
+// REPLAY
+// ══════════════════════════════════════════
+let replayTimer = null;
+
+function startReplay() {
+  if (replayTimer) { clearInterval(replayTimer); replayTimer = null; }
+  AGENTS.forEach(a => agentStates[a.key] = 'pending');
+  selectedKey = null;
+  document.getElementById('s-dur').textContent = '—';
+  buildAgentList();
+  buildTimeline();
+  updateStats();
+  if (!logCleared) {
+    buildLogBody(); // reset logs
+  }
+  agentFilter = 'all';
+  updateAgentFilterButtons();
+  applyLogFilters();
+
+  let step = 0;
+  const spd = parseInt(document.getElementById('spd').value);
+
+  replayTimer = setInterval(() => {
+    if (step >= AGENTS.length) {
+      clearInterval(replayTimer); replayTimer = null;
+      document.getElementById('s-dur').textContent = '7m 01s';
+      return;
+    }
+    if (step > 0) agentStates[AGENTS[step-1].key] = 'completed';
+    agentStates[AGENTS[step].key] = 'running';
+    buildAgentList();
+    buildTimeline();
+    updateStats();
+    // highlight running agent
+    clickAgent(AGENTS[step].key);
+    if (step === AGENTS.length - 1) {
+      setTimeout(() => {
+        agentStates[AGENTS[step].key] = 'completed';
+        buildAgentList(); buildTimeline(); updateStats();
+        document.getElementById('s-dur').textContent = '7m 01s';
+      }, spd * 0.9);
+    }
+    step++;
+  }, spd);
+}
+
+function resetDone() {
+  if (replayTimer) { clearInterval(replayTimer); replayTimer = null; }
+  AGENTS.forEach(a => agentStates[a.key] = 'completed');
+  buildAgentList(); buildTimeline(); updateStats();
+  document.getElementById('s-dur').textContent = '7m 01s';
+  if (!logCleared) { buildLogBody(); applyLogFilters(); }
+}
+
+// ══════════════════════════════════════════
+// UTIL
+// ══════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+buildAgentList();
+buildAgentFilterButtons();
+buildLogBody();
+buildTimeline();
+updateStats();
+// auto-select first agent so panel isn't blank
+clickAgent('orchestrator');
+</script>
+</body>
+</html>

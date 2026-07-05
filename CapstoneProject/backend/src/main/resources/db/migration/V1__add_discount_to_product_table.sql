@@ -1,0 +1,1 @@
+ALTER TABLE product ADD COLUMN discount DECIMAL(3,2);

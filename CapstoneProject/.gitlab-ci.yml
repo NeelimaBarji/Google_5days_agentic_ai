@@ -1,0 +1,99 @@
+stages:
+  - build
+  - test
+  - security
+  - notify
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+
+cache:
+  paths:
+    - .m2/repository/
+    - frontend/node_modules/
+
+# ─── BACKEND ────────────────────────────────────────────
+backend-build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-21
+  script:
+    - cd backend
+    - mvn clean compile -q
+  artifacts:
+    paths:
+      - backend/target/
+    expire_in: 1 hour
+
+backend-test:
+  stage: test
+  image: maven:3.9-eclipse-temurin-21
+  needs: [backend-build]
+  script:
+    - cd backend
+    - mvn test
+  artifacts:
+    when: always
+    reports:
+      junit: backend/target/surefire-reports/*.xml
+    paths:
+      - backend/target/surefire-reports/
+    expire_in: 1 week
+
+# ─── FRONTEND ───────────────────────────────────────────
+frontend-build:
+  stage: build
+  image: node:20-alpine
+  script:
+    - cd frontend
+    - npm ci --no-audit --no-fund
+    - CI=false npm run build
+  artifacts:
+    paths:
+      - frontend/build/
+    expire_in: 1 hour
+
+frontend-test:
+  stage: test
+  image: node:20-alpine
+  needs: [frontend-build]
+  script:
+    - cd frontend
+    - npm ci --no-audit --no-fund
+    - npm test -- --watchAll=false --passWithNoTests
+  artifacts:
+    when: always
+    paths:
+      - frontend/coverage/
+    expire_in: 1 week
+
+# ─── SECURITY SCAN ──────────────────────────────────────
+security-scan:
+  stage: security
+  image: owasp/dependency-check:latest
+  needs: [backend-test]
+  script:
+    - /usr/share/dependency-check/bin/dependency-check.sh
+      --project "devloop-product-service"
+      --scan backend/pom.xml
+      --format HTML
+      --format JSON
+      --out security-reports/
+      --failOnCVSS 9
+  artifacts:
+    when: always
+    paths:
+      - security-reports/
+    expire_in: 2 weeks
+  allow_failure: true  # Don't block pipeline on low-severity CVEs
+
+# ─── NOTIFY ─────────────────────────────────────────────
+pipeline-summary:
+  stage: notify
+  image: alpine:latest
+  needs: [backend-test, frontend-test]
+  script:
+    - echo "✅ DevLoop Pipeline Complete"
+    - echo "Branch - $CI_COMMIT_REF_NAME"
+    - echo "Commit - $CI_COMMIT_SHORT_SHA"
+    - echo "Pipeline - $CI_PIPELINE_URL"
+  when: always

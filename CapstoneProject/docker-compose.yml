@@ -1,0 +1,64 @@
+version: "3.9"
+
+# DevLoop Full Stack
+# Starts the Spring Boot backend, React frontend, and the DevLoop agent together.
+# Usage: docker compose up --build
+
+services:
+
+  # ─── Spring Boot Product Service ───────────────────────────────────────────
+  backend:
+    image: maven:3.9-eclipse-temurin-21
+    working_dir: /app/backend
+    volumes:
+      - .:/app
+      - maven-cache:/root/.m2
+    ports:
+      - "8080:8080"
+    command: mvn spring-boot:run -q
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/products"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+  # ─── React Frontend ─────────────────────────────────────────────────────────
+  frontend:
+    image: node:20-alpine
+    working_dir: /app/frontend
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    command: sh -c "npm install --silent && npm start"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # ─── DevLoop Agent ──────────────────────────────────────────────────────────
+  devloop-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Mount the full codebase so the agent can read and write files
+      - .:/workspace
+    working_dir: /workspace
+    env_file:
+      - .env
+    environment:
+      - PROJECT_ROOT=/workspace
+      # Point integration tests at the containerised backend
+      - BACKEND_URL=http://backend:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+    # Default: runs PROD-1. Override with:
+    #   docker compose run devloop-agent run PROD-2
+    command: ["run", "PROD-1"]
+
+volumes:
+  maven-cache:

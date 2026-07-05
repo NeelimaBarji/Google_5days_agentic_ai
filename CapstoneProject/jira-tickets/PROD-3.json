@@ -1,0 +1,19 @@
+{
+  "ticket_id": "PROD-3",
+  "title": "Add GET /api/products/low-stock endpoint with configurable threshold",
+  "type": "Story",
+  "status": "To Do",
+  "priority": "High",
+  "description": "As a warehouse manager, I want a dedicated API endpoint to retrieve all products with stock below a configurable threshold so that I can trigger restocking alerts. The default threshold should be 10 units.",
+  "acceptance_criteria": [
+    "New endpoint: GET /api/products/low-stock returns list of products with stock < threshold",
+    "Threshold is configurable via query param: GET /api/products/low-stock?threshold=20",
+    "Default threshold is 10 when no param is provided",
+    "Response is a list of Product objects (same schema as GET /api/products)",
+    "Returns empty list (not 404) when no low-stock products exist",
+    "Frontend product list highlights low-stock products (stock < 10) with a warning icon",
+    "A 'Low Stock Alert' summary badge shows in the toolbar with the count of low-stock items"
+  ],
+  "change_type": "BACKEND",
+  "affected_area": "ProductRepository.java, ProductService.java, ProductController.java, ProductList.jsx"
+}

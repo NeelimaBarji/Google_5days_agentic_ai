@@ -1,0 +1,16 @@
+{
+  "ticket_id": "PROD-2",
+  "title": "Show total product count above the product list",
+  "type": "Story",
+  "status": "To Do",
+  "priority": "Low",
+  "description": "As a user, I want to see the total number of products displayed above the product list (e.g. 'Showing 7 products') so that I know how many products exist at a glance.",
+  "acceptance_criteria": [
+    "A label appears above the product list showing the total count, e.g. 'Showing 7 products'",
+    "The count reflects the number of products currently displayed in the list",
+    "When only 1 product is shown, the label reads 'Showing 1 product' (singular)",
+    "No backend changes required"
+  ],
+  "change_type": "FRONTEND",
+  "affected_area": "ProductList.jsx"
+}

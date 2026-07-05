@@ -1,0 +1,19 @@
+{
+  "ticket_id": "PROD-1",
+  "title": "Add discount field to Product",
+  "type": "Story",
+  "status": "In Progress",
+  "priority": "Medium",
+  "description": "As a product manager, I want to add a discount percentage field to each product so that we can run promotional pricing. The discount should be stored as a decimal (0.0 to 1.0) and returned in the API response.",
+  "acceptance_criteria": [
+    "Product entity has a new field: discount (BigDecimal, nullable, between 0.0 and 1.0)",
+    "GET /api/products returns the discount field in the response",
+    "GET /api/products/{id} returns the discount field",
+    "POST /api/products accepts an optional discount field",
+    "PUT /api/products/{id} allows updating the discount field",
+    "Frontend product detail page displays the discount percentage (e.g., '15% off')",
+    "Unit tests cover the new field"
+  ],
+  "change_type": "BACKEND",
+  "affected_area": "Product entity, repository, service, controller, frontend detail view"
+}

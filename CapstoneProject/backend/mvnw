@@ -1,0 +1,50 @@
+#!/bin/sh
+# Maven wrapper script
+# Downloads Maven automatically if not installed
+
+set -e
+
+# Find java
+if [ -n "$JAVA_HOME" ]; then
+    JAVACMD="$JAVA_HOME/bin/java"
+else
+    JAVACMD="java"
+fi
+
+if ! command -v "$JAVACMD" > /dev/null 2>&1; then
+    echo "ERROR: Java not found. Please install Java 17."
+    echo "Run: brew install openjdk@17"
+    exit 1
+fi
+
+MAVEN_VERSION="3.9.6"
+MAVEN_HOME="$HOME/.m2/wrapper/dists/apache-maven-${MAVEN_VERSION}"
+MAVEN_CMD="$MAVEN_HOME/bin/mvn"
+
+if [ ! -f "$MAVEN_CMD" ]; then
+    echo "Downloading Maven ${MAVEN_VERSION}..."
+    mkdir -p "$MAVEN_HOME"
+    MAVEN_URL="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+
+    if command -v curl > /dev/null 2>&1; then
+        curl -fsSL "$MAVEN_URL" | tar -xz -C "$HOME/.m2/wrapper/dists/"
+    else
+        wget -qO- "$MAVEN_URL" | tar -xz -C "$HOME/.m2/wrapper/dists/"
+    fi
+
+    # Find the extracted directory
+    MAVEN_CMD=$(find "$HOME/.m2/wrapper/dists" -name "mvn" -path "*/apache-maven-${MAVEN_VERSION}/*" 2>/dev/null | head -1)
+
+    if [ -z "$MAVEN_CMD" ]; then
+        echo "ERROR: Failed to download Maven. Installing via SDKMAN..."
+        curl -s "https://get.sdkman.io" | bash
+        source "$HOME/.sdkman/bin/sdkman-init.sh"
+        sdk install maven
+        exec mvn "$@"
+    fi
+
+    chmod +x "$MAVEN_CMD"
+    echo "Maven ${MAVEN_VERSION} ready."
+fi
+
+exec "$MAVEN_CMD" "$@"
